@@ -103,9 +103,29 @@ sys2b = System(
     sparse([],[],[])
 )
 
-f_out1 = F("q0","o2",sys2a)
+f_out1 = F("q0","o2",sys2b)
 @test length(f_out1) == 2
 @test "q1" in f_out1
+
+# Test2c: F using multiple states as input
+sys2c = System(
+    ["q0","q1","q2","q3"], 
+    ["q0"], 
+    ["o1","o2"], 
+    [
+        sparse([2,2],[2,3],[1,1]),
+        sparse([1,2,2],[2,2,3],[1,1,1]),
+        sparse([1,2],[3,4],[1,1]),
+        sparse([1,2],[1,2],[1,1])
+    ],
+    [],
+    sparse([],[],[])
+)
+
+f_out2 = F(["q0","q2"],"o2",sys2c)
+@test length(f_out2) == 3
+@test "q1" in f_out2
+@test Set(["q1","q2","q3"]) == Set(f_out2)
 
 """
 Section 3: H()

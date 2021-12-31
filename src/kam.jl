@@ -1,13 +1,12 @@
 # kam.jl
 # Description:
-#   
+#   Includes the include 
 
-function KAM(system_in::System)
-    # Constants
+include("system.jl")
 
-    # Algorithm
-    cover = CreateCover(system_in)
-    EXP_Gamma = Vector{EXP_Gamma}([])
-    EXP_X = []
+include("cover.jl")
+include("exp_x_element.jl")
+include("exp_gamma_elt.jl")
+include("exp_f_element.jl")
+include("utilities.jl")
 
-end

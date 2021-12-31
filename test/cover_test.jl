@@ -4,13 +4,12 @@
 
 using Test
 
-include("system.jl")
-include("cover.jl")
+include("../src/KAM.jl")
 
 # Functions
 
 """
-
+Test #1
 """
 
 # Test1a: Basic CreateCover test where each state gave individual unique outputs

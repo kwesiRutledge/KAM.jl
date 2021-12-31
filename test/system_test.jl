@@ -6,7 +6,7 @@ import Test
 import SparseArrays
 using Test
 
-include("system.jl")
+include("../src/KAM.jl")
 
 """
 Test 1:

@@ -186,6 +186,54 @@ function F(x_index::Integer, u_index::Integer, system_in::System)
 end
 
 """
+F(x_array::Vector{String}, u::String, system_in::System)
+Description:
+    Attempts to find the set of states that the system will transition to
+    from the current state x with input u.
+"""
+function F(x_array::Vector{String}, u::String, system_in::System)
+    # Constants
+    u_index = find_input_index_of(u,system_in)
+
+    # Algorithm
+    nextStateIndices = Vector{Integer}([])
+    for x in x_array
+        x_index = find_state_index_of(x,system_in)
+        push!(nextStateIndices,F(x_index,u_index,system_in)...)
+    end
+
+    nextStatesAsStrings = Array{String}([])
+    for nsi_index = 1:length(nextStateIndices)
+        push!(nextStatesAsStrings,system_in.X[nextStateIndices[nsi_index]])
+    end
+
+    return nextStatesAsStrings
+
+end
+
+"""
+F(x_indices::Vector{Integer}, u_index::Integer, system_in::System)
+Description:
+    Attempts to find the set of states that the system will transition to
+    from the current state system_in.X[x_index] with input system_in.U[u_index].
+"""
+function F(x_indices::Vector{Integer}, u_index::Integer, system_in::System)
+    # Constants
+
+    # Algorithm
+    ancestorStates = Vector{String}([])
+
+    for x_index in x_indices
+        push!(ancestorStates,F(x_index,u_index,system_in)...)
+    end
+
+    return ancestorStates
+
+end
+
+
+
+"""
 H(x::String,system_in::System)
 Description:
     When an input state is given, this function produces the output from the set of strings Y.
@@ -359,4 +407,34 @@ function check_u(u_in::String,system_in::System)
     end
 
     return
+end
+
+function KAM(system_in::System)
+    # Constants
+
+    # Algorithm
+    cover = CreateCover(system_in)
+
+    EXP_Gamma = Vector{EXP_Gamma_Element}([])
+    EXP_X = GetInitialEXP_X(system_in,cover)
+    EXP_F = Vector{EXP_F_Element}([])
+
+    most_recent_EXP_X_elts = EXP_X
+
+    while Set( ProjectToGammaSet(EXP_X) ) == Set(EXP_Gamma)
+        # Project EXP_X to make new EXP_Gamma
+        EXP_Gamma = ProjectToGammaSet(EXP_X)
+
+        for exp_x_elt in most_recent_EXP_X_elts
+            for u in system_in.U
+                for y in system_in.Y
+                    v_prime = push!(exp_x_elt.v,u,y)
+                    c_prime::Vector{String} = F()
+                end
+            end
+
+
+        end
+    end
+
 end

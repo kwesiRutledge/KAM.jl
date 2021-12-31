@@ -127,6 +127,8 @@ f_out2 = F(["q0","q2"],"o2",sys2c)
 @test "q1" in f_out2
 @test Set(["q1","q2","q3"]) == Set(f_out2)
 
+println(intersect(f_out2,HInverse(y,system_in)))
+
 """
 Section 3: H()
 """

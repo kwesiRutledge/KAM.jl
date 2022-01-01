@@ -429,12 +429,41 @@ function KAM(system_in::System)
             for u in system_in.U
                 for y in system_in.Y
                     v_prime = push!(exp_x_elt.v,u,y)
-                    c_prime::Vector{String} = F()
+                    c_prime::Vector{String} = intersect( F(exp_x_elt.c,u,system_in) , HInverse(y,system_in))
+                    if length(c_prime) == 0
+                        continue
+                    end
+
+                    Q_prime = GetMinimalCoverElementsContaining(c_prime,cover)
+
+                    # Modify EXP_X and EXP_F
+                    for q_prime in Q_prime
+                        union!(EXP_X, EXP_X_Element( (v_prime,q_prime,c_prime) ) )
+                        union!(EXP_F, EXP_F_Element( ( exp_x_elt , u , EXP_X_Element( (v_prime,q_prime,c_prime) ) ) ))
+                    end
+
                 end
             end
 
-
+            # Determine if refinement is necessary
+            if exp_x_elt.c ⊊ exp_x_elt.q
+                refine!( ( EXP_F , EXP_Gamma , EXP_X ) ,  )
+            end
         end
     end
+
+end
+
+"""
+refine()
+Description:
+
+    Lines 23 - 38 from Algorithm in 'On Abstraction Based Controller Design ... '
+"""
+function refine( exp_x_elt::EXP_X_Element , EXP_F , EXP_Gamma , EXP_X )
+    # Constants
+
+    # Algorithm
+    
 
 end

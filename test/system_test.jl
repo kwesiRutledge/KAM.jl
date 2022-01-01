@@ -127,8 +127,6 @@ f_out2 = F(["q0","q2"],"o2",sys2c)
 @test "q1" in f_out2
 @test Set(["q1","q2","q3"]) == Set(f_out2)
 
-println(intersect(f_out2,HInverse(y,system_in)))
-
 """
 Section 3: H()
 """
@@ -226,6 +224,8 @@ tempHInverse = HInverse("y2",sys4c)
 @test length(tempHInverse) == 3
 @test tempHInverse[1] == "q0"
 @test tempHInverse == ["q0","q3","q4"]
+
+println(intersect(F("q0","o1",sys4c),HInverse("y1",sys4c)))
 
 """
 Section 5: add_transition!

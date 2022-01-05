@@ -25,3 +25,6 @@ Manifest.toml
 
 # Automatically generated Mac OS X Files
 *.DS_Store
+
+# Python Notebook Temporary Files
+*.ipynb_checkpoints*

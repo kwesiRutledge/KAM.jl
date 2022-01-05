@@ -386,7 +386,7 @@ function check_u(u_index_in::Integer,system_in::System)
     n_U = length(system_in.U)
 
     # Algorithm
-    if (1 > u_index_in) || (n_X < u_index_in)
+    if (1 > u_index_in) || (n_U < u_index_in)
         throw(DomainError("The input transition references a state " * string(u_index_in) * " which is not in the input space!"))
     end
 
@@ -409,61 +409,47 @@ function check_u(u_in::String,system_in::System)
     return
 end
 
-function KAM(system_in::System)
+"""
+get_vending_machine_system()
+Description:
+    Returns the beverage vending machine example.
+"""
+function get_vending_machine_system1()
     # Constants
+    state_names = ["pay","select","get_beer","get_soda"]
+    input_names = ["N/A"]
+    output_names = ["pay","select","getting_drink"]
 
     # Algorithm
-    cover = CreateCover(system_in)
-
-    EXP_Gamma = Vector{EXP_Gamma_Element}([])
-    EXP_X = GetInitialEXP_X(system_in,cover)
-    EXP_F = Vector{EXP_F_Element}([])
-
-    most_recent_EXP_X_elts = EXP_X
-
-    while Set( ProjectToGammaSet(EXP_X) ) == Set(EXP_Gamma)
-        # Project EXP_X to make new EXP_Gamma
-        EXP_Gamma = ProjectToGammaSet(EXP_X)
-
-        for exp_x_elt in most_recent_EXP_X_elts
-            for u in system_in.U
-                for y in system_in.Y
-                    v_prime = push!(exp_x_elt.v,u,y)
-                    c_prime::Vector{String} = intersect( F(exp_x_elt.c,u,system_in) , HInverse(y,system_in))
-                    if length(c_prime) == 0
-                        continue
-                    end
-
-                    Q_prime = GetMinimalCoverElementsContaining(c_prime,cover)
-
-                    # Modify EXP_X and EXP_F
-                    for q_prime in Q_prime
-                        union!(EXP_X, EXP_X_Element( (v_prime,q_prime,c_prime) ) )
-                        union!(EXP_F, EXP_F_Element( ( exp_x_elt , u , EXP_X_Element( (v_prime,q_prime,c_prime) ) ) ))
-                    end
-
-                end
-            end
-
-            # Determine if refinement is necessary
-            if exp_x_elt.c ⊊ exp_x_elt.q
-                refine!( ( EXP_F , EXP_Gamma , EXP_X ) ,  )
-            end
-        end
+    system_out = System(length(state_names),length(input_names),length(output_names))
+    
+    # Add state names
+    for state_index in range(1,stop=length(state_names))
+        system_out.X[state_index] = state_names[state_index]
     end
 
-end
+    # Add Input Names
+    for input_index in range(1,stop=length(input_names))
+        system_out.U[input_index] = input_names[input_index]
+    end
 
-"""
-refine()
-Description:
+    # Add Output Names
+    for output_index in range(1,stop=length(output_names))
+        system_out.Y[output_index] = output_names[output_index]
+    end
 
-    Lines 23 - 38 from Algorithm in 'On Abstraction Based Controller Design ... '
-"""
-function refine( exp_x_elt::EXP_X_Element , EXP_F , EXP_Gamma , EXP_X )
-    # Constants
+    # Create transitions
+    add_transition!(system_out,("pay","N/A","select"))
+    add_transition!(system_out,("select","N/A","get_beer"))
+    add_transition!(system_out,("select","N/A","get_soda"))
+    add_transition!(system_out,("get_beer","N/A","pay"))
+    add_transition!(system_out,("get_soda","N/A","pay"))
 
-    # Algorithm
-    
+    # Create Outputs
+    system_out.HAsMatrix[1,1] = 1
+    system_out.HAsMatrix[2,2] = 1
+    system_out.HAsMatrix[3,3] = 1
+    system_out.HAsMatrix[4,3] = 1
 
+    return system_out
 end

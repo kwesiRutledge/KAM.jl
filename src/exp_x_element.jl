@@ -40,15 +40,32 @@ ProjectToGammaSet
 Description:
     Projects all of the elements in a set of EXP_X_Element elements to a set of 
 """
-function ProjectToGammaSet( X_set::Vector{EXP_X_Element} )
+function ProjectToGammaSet( EXP_X::Vector{EXP_X_Element} )
     # Constants
 
     # Algorithm
     gamma_set_out = Vector{EXP_Gamma_Element}([])
-    for x_elt in X_set
+    for x_elt in EXP_X
         # Append to the new Gamma Set each Projected element
         push!(gamma_set_out,EXP_Gamma_Element(x_elt))
     end
 
     return gamma_set_out
+end
+
+"""
+ChangeAllInstancesOfElement!( EXP_X::Vector{EXP_X_Element}, exp_x_elt_init::EXP_X_Element , exp_x_elt_new::EXP_X_Element  )
+Description:
+    Changes all instances of the element exp_x_element_init in the set EXP_X to be of value exp_x_elt_new.
+"""
+function ChangeAllInstancesOfElement!( EXP_X::Vector{EXP_X_Element}, exp_x_elt_init::EXP_X_Element , exp_x_elt_new::EXP_X_Element  )
+    # Constants
+
+    # Algorithm
+    for exp_x_index in range(1,stop=length(EXP_X))
+        if EXP_X[exp_x_index] == exp_x_elt_init
+            EXP_X[exp_x_index] = exp_x_elt_new
+        end
+    end
+
 end

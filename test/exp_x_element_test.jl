@@ -104,3 +104,43 @@ project1 = ProjectToGammaSet(EXP_X1)
 
 @test project1[1] == EXP_Gamma_Element( (["typo"],["typo"]) )
 @test project1[2] == EXP_Gamma_Element( (["walkingDead"],["walkingDead"]) )
+
+"""
+Test 4: ChangeAllInstancesOfElement
+"""
+
+# 4a: Change single element in list.
+
+exp_x_elt_4a = EXP_X_Element( (["woah"],["typo"],["typo"]) )
+EXP_X_4a = Vector{EXP_X_Element}([
+    exp_x_elt_4a,
+    EXP_X_Element( (["tvShow"],["walkingDead"],["walkingDead"]) ),
+    EXP_X_Element( (["figure"],["it"],["out"]) )
+])
+
+EXP_X_4a_copy = copy(EXP_X_4a)
+
+exp_x_elt_4a_target = EXP_X_Element( (exp_x_elt_4a.v, ["typo1"] , exp_x_elt_4a.c) )
+
+ChangeAllInstancesOfElement!(EXP_X_4a_copy, exp_x_elt_4a , exp_x_elt_4a_target)
+
+@test exp_x_elt_4a_target == EXP_X_4a_copy[1]
+@test Set(EXP_X_4a) != Set(EXP_X_4a_copy)
+
+# 4b: Change no elements in list.
+
+exp_x_elt_4b = EXP_X_Element( (["woah"],["matrix"],["matrix"]) )
+EXP_X_4b = Vector{EXP_X_Element}([
+    EXP_X_Element( (["woah"],["typo"],["typo"]) ),
+    EXP_X_Element( (["tvShow"],["walkingDead"],["walkingDead"]) ),
+    EXP_X_Element( (["figure"],["it"],["out"]) )
+])
+
+EXP_X_4b_copy = copy(EXP_X_4b)
+
+exp_x_elt_4b_target = EXP_X_Element( (exp_x_elt_4b.v, ["typo1"] , exp_x_elt_4b.c) )
+
+ChangeAllInstancesOfElement!(EXP_X_4b_copy, exp_x_elt_4b , exp_x_elt_4b_target)
+
+@test exp_x_elt_4b_target != EXP_X_4b[1]
+@test Set(EXP_X_4b) == Set(EXP_X_4b_copy)

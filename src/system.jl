@@ -264,6 +264,18 @@ function H(x_index::Integer,system_in::System)
     return tempYIndices[ matching_indices ]
 end
 
+function H(x_list::Vector{String},system_in::System)::Vector{String}
+    # Constants
+
+    # Algorithm
+    y_list = H( x_list[1] , system_in )
+    for x_index in range(2,stop=length(x_list))
+        y_list = y_list ∩ H( x_list[x_index] , system_in) # ∩
+    end
+
+    return y_list
+end
+
 
 """
 HInverse(y::String,system_in::System)
@@ -450,6 +462,270 @@ function get_vending_machine_system1()
     system_out.HAsMatrix[2,2] = 1
     system_out.HAsMatrix[3,3] = 1
     system_out.HAsMatrix[4,3] = 1
+
+    return system_out
+end
+
+"""
+get_figure2_system(num_b::Integer)
+Description:
+    Returns the discrete state system example from Figure 2.
+"""
+function get_figure2_system(num_b::Integer)
+    # Constants
+    input_names = ["N/A"]
+    output_names = ["A","B"]
+
+    num_a = 2
+
+    # Input Processing
+    if num_b < 1
+        throw(DomainError("The number of 'b' states must be a positive integer, not " * string(num_b) * "!"))
+    end
+
+    # Create System
+
+    system_out = System(num_a+num_b,length(input_names),length(output_names))
+    
+    # Add state names
+    system_out.X[1] = "a1"
+    system_out.X[2] = "a2"
+    for state_index in range(1,stop=num_b)
+        system_out.X[state_index+2] = "b" * string(state_index)
+    end
+
+    # Add Input Names
+    for input_index in range(1,stop=length(input_names))
+        system_out.U[input_index] = input_names[input_index]
+    end
+
+    # Add Output Names
+    for output_index in range(1,stop=length(output_names))
+        system_out.Y[output_index] = output_names[output_index]
+    end
+
+    # Add Initial States
+    push!(system_out.X0,"a1","a2")
+
+    # Create transitions
+    add_transition!(system_out,("a1","N/A","b1"))
+    for b_index in range(2,stop=num_b)
+        add_transition!(system_out,( "b" * string(b_index-1), "N/A" , "b" * string(b_index)  ))
+        add_transition!(system_out,( "b" * string(b_index)  , "N/A" , "b" * string(b_index-1)  ))
+        add_transition!(system_out,( "b" * string(b_index)  , "N/A" , "a2"  ))
+    end
+
+    add_transition!(system_out,("b1","N/A","a2"))
+    add_transition!(system_out,("a2","N/A","a2"))
+
+    # Create Outputs
+    for x_index in range(1,stop=length(system_out.X))
+        x = system_out.X[x_index]
+
+        if (x == "a1") || (x == "a2")
+            # Label with an A
+            system_out.HAsMatrix[x_index,1] = 1
+        else
+            # Label with a B
+            system_out.HAsMatrix[x_index,2] = 1
+        end
+
+    end
+
+    return system_out
+end
+
+"""
+get_figure3_system(num_patterns::Integer)
+Description:
+    Returns the discrete state system example from Figure 2.
+"""
+function get_figure3_system(num_patterns::Integer)
+    # Constants
+    input_names = ["N/A"]
+    output_names = ["A","B","C","D","E","F","G"]
+
+    # Input Processing
+    if num_patterns < 1
+        throw(DomainError("The number of 'pattern repititions' states must be a positive integer, not " * string(num_patterns) * "!"))
+    end
+
+    # Create System
+    n_a = 1
+    n_b = 6 * num_patterns
+    n_c = 6 * num_patterns
+    n_d = ( 1 + 2 + 2 ) * num_patterns
+    n_e = ( 1 + 2 + 2 ) * num_patterns
+    n_f = 6 * num_patterns
+    n_g = 6 * num_patterns
+
+    n_list = [ n_a , n_b , n_c , n_d , n_e , n_f , n_g ]
+
+    n_X = sum(n_list)
+
+    system_out = System(n_X,length(input_names),length(output_names))
+    
+    # Add state names
+    system_out.X[1] = "a1"
+    temp_prefixes = ["a","b","c"]
+    for prefix_index in range(1,stop=length(temp_prefixes))
+        for state_index in range(1,stop=n_list[prefix_index])
+            system_out.X[state_index+sum(n_list[1:prefix_index-1])] = temp_prefixes[prefix_index] * string(state_index)
+        end
+    end
+
+    # insert d names
+    for state_index in range(1,stop=n_d)
+        if mod(state_index,5) == 1
+            system_out.X[state_index+sum(n_list[1:3])] = "d" * string(state_index)
+        elseif (mod(state_index,5) == 2)
+            system_out.X[state_index+sum(n_list[1:3])] = "d" * string(state_index+1) * "^l"
+        elseif mod(state_index,5) == 3
+            system_out.X[state_index+sum(n_list[1:3])] = "d" * string(state_index) * "^r"
+        elseif mod(state_index,5) == 4
+            system_out.X[state_index+sum(n_list[1:3])] = "d" * string(state_index+1) * "^l"
+        elseif mod(state_index,5) == 0
+            system_out.X[state_index+sum(n_list[1:3])] = "d" * string(state_index) * "^r"
+        end
+    end
+
+    # insert e names
+    for state_index in range(1,stop=n_d)
+        if mod(state_index,5) == 1
+            system_out.X[state_index+sum(n_list[1:4])] = "e" * string(state_index+1) * "^l"
+        elseif (mod(state_index,5) == 2)
+            system_out.X[state_index+sum(n_list[1:4])] = "e" * string(state_index) * "^r"
+        elseif mod(state_index,5) == 3
+            system_out.X[state_index+sum(n_list[1:4])] = "e" * string(state_index+1)
+        elseif mod(state_index,5) == 4
+            system_out.X[state_index+sum(n_list[1:4])] = "e" * string(state_index+2) * "^l"
+        elseif mod(state_index,5) == 0
+            system_out.X[state_index+sum(n_list[1:4])] = "e" * string(state_index+1) * "^r"
+        end
+    end
+
+    # insert f and g names
+    temp_prefixes2 = ["f","g"]
+    for prefix_index in range(1,stop=length(temp_prefixes2))
+        for state_index in range(1,stop=n_list[5+prefix_index])
+            system_out.X[state_index+sum(n_list[1:5+prefix_index-1])] = temp_prefixes2[prefix_index] * string(state_index)
+        end
+    end
+
+    # Add Input Names
+    for input_index in range(1,stop=length(input_names))
+        system_out.U[input_index] = input_names[input_index]
+    end
+
+    # Add Output Names
+    for output_index in range(1,stop=length(output_names))
+        system_out.Y[output_index] = output_names[output_index]
+    end
+
+    # Add Initial States
+    push!(system_out.X0,"a1")
+
+    # Create transitions
+    add_transition!(system_out,("a1","N/A","b1"))
+    # Add b transitions
+    for b_index in range(1,stop=n_b-1)
+        add_transition!(system_out,( "b" * string(b_index+1), "N/A" , "b" * string(b_index)  ))
+        add_transition!(system_out,( "b" * string(b_index)  , "N/A" , "b" * string(b_index+1)  ))
+        add_transition!(system_out,( "b" * string(b_index)  , "N/A" , "c" * string(b_index)  ))
+    end
+    # Add c transitions
+    for c_index in range(1,stop=n_c)
+        if mod(c_index,6) == 1
+            # Send to the a state marked d * string(c_index)
+            add_transition!(system_out,( "c" * string(c_index)  , "N/A" , "d" * string(c_index)  ))
+        elseif mod(c_index,6) == 2
+            # Send to the left and right e states
+            add_transition!(system_out,( "c" * string(c_index)  , "N/A" , "e" * string(c_index) * "^l" ))
+            add_transition!(system_out,( "c" * string(c_index)  , "N/A" , "e" * string(c_index) * "^r" ))
+        elseif mod(c_index,6) == 3
+            # Send to the left and right d states
+            add_transition!(system_out,( "c" * string(c_index)  , "N/A" , "d" * string(c_index) * "^l" ))
+            add_transition!(system_out,( "c" * string(c_index)  , "N/A" , "d" * string(c_index) * "^r" ))
+        elseif mod(c_index,6) == 4
+            # Send to the a state marked e * string(c_index)
+            add_transition!(system_out,( "c" * string(c_index)  , "N/A" , "e" * string(c_index)  ))
+        elseif mod(c_index,6) == 5
+            # Send to the left and right d states
+            add_transition!(system_out,( "c" * string(c_index)  , "N/A" , "d" * string(c_index) * "^l" ))
+            add_transition!(system_out,( "c" * string(c_index)  , "N/A" , "d" * string(c_index) * "^r" ))
+        elseif mod(c_index,6) == 0
+            # Send to the left and right e states
+            add_transition!(system_out,( "c" * string(c_index)  , "N/A" , "e" * string(c_index) * "^l" ))
+            add_transition!(system_out,( "c" * string(c_index)  , "N/A" , "e" * string(c_index) * "^r" ))
+        end
+    end
+
+    # add d transitions
+    for d_index in range(1,stop=n_d)
+        if mod(d_index,5) == 1
+            # Send to both f and g states with d_index
+            add_transition!(system_out,( "d" * string(d_index)  , "N/A" , "f" * string(d_index)  ))
+            add_transition!(system_out,( "d" * string(d_index)  , "N/A" , "g" * string(d_index)  ))
+        elseif mod(d_index,5) == 2
+            # This is the left state. Send to the f state
+            add_transition!(system_out,( "d" * string(d_index+1) * "^l"  , "N/A" , "f" * string(d_index+1) ))
+        elseif mod(d_index,5) == 3
+            # This is the right state. Send to the g state with d_index
+            add_transition!(system_out,( "d" * string(d_index) * "^r"  , "N/A" , "g" * string(d_index) ))
+        elseif mod(d_index,5) == 4
+            # This is the left state. Send to the f state
+            add_transition!(system_out,( "d" * string(d_index+1) * "^l"  , "N/A" , "f" * string(d_index+1) ))
+        elseif mod(d_index,5) == 0
+            # This is the right state. Send to the g state with d_index
+            add_transition!(system_out,( "d" * string(d_index) * "^r"  , "N/A" , "g" * string(d_index) ))
+        end
+    end
+
+    # add e transitions
+    for e_index in range(1,stop=n_e)
+        if mod(e_index,5) == 1
+            # This is the left state. Route to f
+            add_transition!(system_out,( "e" * string(e_index+1) * "^l"  , "N/A" , "f" * string(e_index+1) ))
+        elseif mod(e_index,5) == 2
+            # This is the right state. Send to the g state with e_index
+            add_transition!(system_out,( "e" * string(e_index) * "^r"  , "N/A" , "g" * string(e_index) ))
+        elseif mod(e_index,5) == 3
+            # Send to both f and g states with e_index
+            add_transition!(system_out,( "e" * string(e_index+1)  , "N/A" , "f" * string(e_index+1)  ))
+            add_transition!(system_out,( "e" * string(e_index+1)  , "N/A" , "g" * string(e_index+1)  ))
+        elseif mod(e_index,5) == 4
+            # This is the left state. Send to the f state
+            add_transition!(system_out,( "e" * string(e_index+2) * "^l"  , "N/A" , "f" * string(e_index+2) ))
+        elseif mod(e_index,5) == 0
+            # This is the right state. Send to the g state with e_index
+            add_transition!(system_out,( "e" * string(e_index+1) * "^r"  , "N/A" , "g" * string(e_index+1) ))
+        end
+
+    end
+
+    # add f and g transitions
+    for state_index in range(1,stop=n_f)
+        add_transition!(system_out,( "f" * string(state_index) , "N/A" , "f" * string(state_index) ))
+        add_transition!(system_out,( "g" * string(state_index) , "N/A" , "g" * string(state_index) ))
+    end
+
+    # add_transition!(system_out,("b1","N/A","a2"))
+    # add_transition!(system_out,("a2","N/A","a2"))
+
+    # Create Outputs
+    temp_prefixes3 = ["a","b","c","d","e","f","g"]
+    for x_index in range(1,stop=length(system_out.X))
+        x = system_out.X[x_index]
+
+        # Search for matches in temp_prefixes3
+        for prefix_index in range(1,stop=length(temp_prefixes3))
+            if contains( x , temp_prefixes3[prefix_index] )
+                system_out.HAsMatrix[x_index,prefix_index] = 1
+            end
+
+        end
+
+    end
 
     return system_out
 end

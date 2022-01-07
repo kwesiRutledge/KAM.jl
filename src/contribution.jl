@@ -42,9 +42,9 @@ function KAM(system_in::System)
             end
 
             # Determine if refinement is necessary
-            # if exp_x_elt.c ⊊ exp_x_elt.q
-            #     refine!( ( EXP_F , EXP_Gamma , EXP_X ) ,  )
-            # end
+            if exp_x_elt.c ⊊ exp_x_elt.q
+                EXP_F_r , EXP_Gamma_r , EXP_X_r , cover_r = refine(target, sys_3c, EXP_F_3c, EXP_Gamma , EXP_X , cover)
+            end
         end
     end
 
@@ -153,20 +153,120 @@ end
 """
 refine()
 Description:
-
     Lines 23 - 38 from Algorithm in 'On Abstraction Based Controller Design ... '
 """
-function refine( exp_x_elt::EXP_X_Element , system_in::System, EXP_F_in::Vector{EXP_F_Element} , EXP_Gamma_in::Vector{EXP_Gamma_Element} , EXP_X_in::Vector{EXP_X_Element} )
+function refine( exp_x_elt::EXP_X_Element , system_in::System, EXP_F_in::Vector{EXP_F_Element} , EXP_Gamma_in::Vector{EXP_Gamma_Element} , EXP_X_in::Vector{EXP_X_Element} , Cover_in::Vector{Vector{String}} )
     # Constants
 
     # Algorithm
 
     # Set default values for EXP_F_out, EXP_Gamma_out, EXP_X_out
-    EXP_X_out = EXP_X_in
-    EXP_Gamma_out = EXP_Gamma_in
-    EXP_F_out = EXP_F_in
+    EXP_X_out = copy(EXP_X_in)
+    EXP_Gamma_out = copy(EXP_Gamma_in)
+    EXP_F_out = copy(EXP_F_in)
+    Cover_out = copy(Cover_in)
 
     PostQ_list = PostQ( exp_x_elt , system_in , EXP_F_in )
     s = u_dependent_Pre( exp_x_elt.q , system_in , PostQ_list )
+
+    if s ⊊ exp_x_elt.q
+        # If the set s is smaller than q, then we can refine our sets.
+        push!(Cover_out,s) #Add s to the cover
+
+        # Modify EXP_Gamma, EXP_F, EXP_X
+        for temp_exp_x_elt in EXP_X_out
+            
+            if (temp_exp_x_elt.c ⊊ s) && (temp_exp_x_elt.q == exp_x_elt.q) # TODO: Find out if this should be strict subset ⊊ or just subset ⊆
+                ChangeAllInstancesOfElement!(EXP_X_out, temp_exp_x_elt , EXP_X_Element( (temp_exp_x_elt.v, s , temp_exp_x_elt.c) ) )
+                ChangeAllInstancesOfElement!(EXP_Gamma_out, EXP_Gamma_Element( temp_exp_x_elt ) , EXP_Gamma_Element( ( s , temp_exp_x_elt.c) ) )
+                ChangeAllInstancesOfElement!(EXP_F_out, temp_exp_x_elt , EXP_X_Element( (temp_exp_x_elt.v, s , temp_exp_x_elt.c) ) )
+            end
+        end
+
+        #Check to see if more refinement is necessary.
+        for temp_exp_f_elt in EXP_F_out
+            if ( Set(temp_exp_f_elt.tuple2.q) == Set(s) ) && ( temp_exp_f_elt.tuple1.c ⊊ temp_exp_f_elt.tuple1.q )
+                EXP_F_out, EXP_Gamma_out, EXP_X_out, Cover_out = refine( temp_exp_f_elt.tuple1 , system_in , EXP_F_out , EXP_Gamma_out , EXP_X_out , Cover_out )
+            end
+        end
+    end
+
+    # Return new sets
+    return EXP_F_out , EXP_Gamma_out , EXP_X_out , Cover_out
+
+end
+
+"""
+extract(EXP_X::Vector{EXP_X_Element},EXP_F::Vector{EXP_F_Element})::System
+Description:
+    Converts an EXP_X and EXP_F representation into a new system.
+"""
+function extract(system_in::System,EXP_X::Vector{EXP_X_Element},EXP_F::Vector{EXP_F_Element})::System
+    # Constants
+
+    # Algorithm
+    Xhat = Vector{Vector{String}}([])
+    for exp_x_elt in EXP_X
+        if !(exp_x_elt.q in Xhat)
+            push!(Xhat,exp_x_elt.q)
+        end
+    end
+
+    Xhat0 = Vector{Vector{String}}([])
+    for y in system_in.Y
+        xhat0_candidate::Vector{String} = HInverse(y,system_in) ∩ system_in.X0 
+        if length(xhat0_candidate) > 0
+            push!(Xhat0,xhat0_candidate)
+        end
+    end
+
+    # Create blank transition System
+    sys_out = System( length(Xhat) , length(system_in.U) , length(system_in.Y) )
+
+    # Add state names
+    for xhat_index in range(1,stop=length(Xhat))
+        xhat = Xhat[xhat_index]
+
+        # Create names for each element.
+        xhat_name = ""
+        for elt_index in range(1,stop=length(xhat))
+            temp_elt = xhat[elt_index]
+            xhat_name *= string(temp_elt)
+            if elt_index != length(xhat)
+                xhat_name *= ","
+            end
+        end
+        # Add name
+        sys_out.X[xhat_index] = xhat_name
+    end
+
+    # Define the Xhat0 names.
+    for xhat_index in range(1,stop=length(Xhat0))
+        xhat = Xhat[xhat_index]
+
+        # Create names for each element.
+        xhat_name = ""
+        for elt_index in range(1,stop=length(xhat))
+            temp_elt = xhat[elt_index]
+            xhat_name *= string(temp_elt)
+            if elt_index != length(xhat)
+                xhat_name *= ","
+            end
+        end
+        # Add name
+        push!(sys_out.X0,xhat_name)
+    end
+
+    # Define the Outputs
+    for xhat_index in range(1,stop=length(Xhat))
+        xhat = Xhat[xhat_index]
+        for yhat_index in range(1,stop=length(system_in.Y))
+            if system_in.Y[yhat_index] in H(xhat,system_in)
+                sys_out.HAsMatrix[xhat_index,yhat_index] = 1
+            end
+        end
+    end
+
+    return sys_out
 
 end

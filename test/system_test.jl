@@ -225,7 +225,7 @@ tempHInverse = HInverse("y2",sys4c)
 @test tempHInverse[1] == "q0"
 @test tempHInverse == ["q0","q3","q4"]
 
-println(intersect(F("q0","o1",sys4c),HInverse("y1",sys4c)))
+# println(intersect(F("q0","o1",sys4c),HInverse("y1",sys4c)))
 
 """
 Section 5: add_transition!
@@ -280,3 +280,17 @@ x2 = sys5b.X[x_next_ind1] # "q3"
 add_transition!(sys5b,(x1,u1,x2))
 @test sys5b.FAsMatrices[x_ind1][u_ind1,x_next_ind1] == 1
 
+"""
+Section 6: get_figure3_system()
+"""
+
+# Test 6a: Verify that the states have proper names.
+
+sys_6a = get_figure3_system(1)
+
+@test sys_6a.X[1] == "a1"
+@test sys_6a.X[8] == "c1"
+@test sys_6a.X[14] == "d1"
+@test sys_6a.X[19] == "e2^l"
+@test sys_6a.X[24] == "f1"
+@test sys_6a.X[30] == "g1"

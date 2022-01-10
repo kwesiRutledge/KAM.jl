@@ -77,7 +77,10 @@ function IsMinimalCoverElement(c_prime::Vector{String},cover_in::Vector{Vector{S
         
         # If there exists an element which is a STRICT SUBSET of c_prime,
         # then c_prime is not minimal
-        if c_double_prime ⊊ c_prime
+        if Set(c_double_prime) ⊊ Set(c_prime)
+            println("c_double_prime")
+            println(c_double_prime)
+            println(c_prime)
             return false
         end
     end

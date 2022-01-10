@@ -345,6 +345,8 @@ function add_transition!(system_in::System,transition_in::Tuple{String,String,St
     x_next_in = transition_in[3]
 
     # Checking inputs
+
+    # println(transition_in)
     
     x_index = find_state_index_of(x_in,system_in)
     u_index = find_input_index_of(u_in,system_in)
@@ -538,7 +540,7 @@ end
 """
 get_figure3_system(num_patterns::Integer)
 Description:
-    Returns the discrete state system example from Figure 2.
+    Returns the discrete state system example from Figure 3 of the paper.
 """
 function get_figure3_system(num_patterns::Integer)
     # Constants
@@ -577,30 +579,30 @@ function get_figure3_system(num_patterns::Integer)
     # insert d names
     for state_index in range(1,stop=n_d)
         if mod(state_index,5) == 1
-            system_out.X[state_index+sum(n_list[1:3])] = "d" * string(state_index)
+            system_out.X[state_index+sum(n_list[1:3])] = "d" * string(state_index + div(state_index,5,RoundDown))
         elseif (mod(state_index,5) == 2)
-            system_out.X[state_index+sum(n_list[1:3])] = "d" * string(state_index+1) * "^l"
+            system_out.X[state_index+sum(n_list[1:3])] = "d" * string(state_index+1 + div(state_index,5,RoundDown)) * "^l"
         elseif mod(state_index,5) == 3
-            system_out.X[state_index+sum(n_list[1:3])] = "d" * string(state_index) * "^r"
+            system_out.X[state_index+sum(n_list[1:3])] = "d" * string(state_index + div(state_index,5,RoundDown)) * "^r"
         elseif mod(state_index,5) == 4
-            system_out.X[state_index+sum(n_list[1:3])] = "d" * string(state_index+1) * "^l"
+            system_out.X[state_index+sum(n_list[1:3])] = "d" * string(state_index+1 + div(state_index,5,RoundDown)) * "^l"
         elseif mod(state_index,5) == 0
-            system_out.X[state_index+sum(n_list[1:3])] = "d" * string(state_index) * "^r"
+            system_out.X[state_index+sum(n_list[1:3])] = "d" * string(state_index + div(state_index,5,RoundDown)-1) * "^r"
         end
     end
 
     # insert e names
-    for state_index in range(1,stop=n_d)
+    for state_index in range(1,stop=n_e)
         if mod(state_index,5) == 1
-            system_out.X[state_index+sum(n_list[1:4])] = "e" * string(state_index+1) * "^l"
+            system_out.X[state_index+sum(n_list[1:4])] = "e" * string(state_index+1 + div(state_index,5,RoundDown) ) * "^l"
         elseif (mod(state_index,5) == 2)
-            system_out.X[state_index+sum(n_list[1:4])] = "e" * string(state_index) * "^r"
+            system_out.X[state_index+sum(n_list[1:4])] = "e" * string(state_index + div(state_index,5,RoundDown) ) * "^r"
         elseif mod(state_index,5) == 3
-            system_out.X[state_index+sum(n_list[1:4])] = "e" * string(state_index+1)
+            system_out.X[state_index+sum(n_list[1:4])] = "e" * string(state_index+1 + div(state_index,5,RoundDown) )
         elseif mod(state_index,5) == 4
-            system_out.X[state_index+sum(n_list[1:4])] = "e" * string(state_index+2) * "^l"
+            system_out.X[state_index+sum(n_list[1:4])] = "e" * string(state_index+2 + div(state_index,5,RoundDown) ) * "^l"
         elseif mod(state_index,5) == 0
-            system_out.X[state_index+sum(n_list[1:4])] = "e" * string(state_index+1) * "^r"
+            system_out.X[state_index+sum(n_list[1:4])] = "e" * string(state_index+1 + div(state_index,5,RoundDown)-1 ) * "^r"
         end
     end
 
@@ -611,6 +613,10 @@ function get_figure3_system(num_patterns::Integer)
             system_out.X[state_index+sum(n_list[1:5+prefix_index-1])] = temp_prefixes2[prefix_index] * string(state_index)
         end
     end
+
+    # for state_index in range(1,stop=length(system_out.X))
+    #     println(system_out.X[state_index])
+    # end
 
     # Add Input Names
     for input_index in range(1,stop=length(input_names))
@@ -664,20 +670,20 @@ function get_figure3_system(num_patterns::Integer)
     for d_index in range(1,stop=n_d)
         if mod(d_index,5) == 1
             # Send to both f and g states with d_index
-            add_transition!(system_out,( "d" * string(d_index)  , "N/A" , "f" * string(d_index)  ))
-            add_transition!(system_out,( "d" * string(d_index)  , "N/A" , "g" * string(d_index)  ))
+            add_transition!(system_out,( "d" * string(d_index + div(d_index,5,RoundDown) )  , "N/A" , "f" * string(d_index + div(d_index,5,RoundDown))  ))
+            add_transition!(system_out,( "d" * string(d_index + div(d_index,5,RoundDown) )  , "N/A" , "g" * string(d_index + div(d_index,5,RoundDown))  ))
         elseif mod(d_index,5) == 2
             # This is the left state. Send to the f state
-            add_transition!(system_out,( "d" * string(d_index+1) * "^l"  , "N/A" , "f" * string(d_index+1) ))
+            add_transition!(system_out,( "d" * string(d_index+1 + div(d_index,5,RoundDown) ) * "^l"  , "N/A" , "f" * string(d_index+1 + div(d_index,5,RoundDown) ) ))
         elseif mod(d_index,5) == 3
             # This is the right state. Send to the g state with d_index
-            add_transition!(system_out,( "d" * string(d_index) * "^r"  , "N/A" , "g" * string(d_index) ))
+            add_transition!(system_out,( "d" * string(d_index + div(d_index,5,RoundDown)) * "^r"  , "N/A" , "g" * string(d_index + div(d_index,5,RoundDown)) ))
         elseif mod(d_index,5) == 4
             # This is the left state. Send to the f state
-            add_transition!(system_out,( "d" * string(d_index+1) * "^l"  , "N/A" , "f" * string(d_index+1) ))
+            add_transition!(system_out,( "d" * string(d_index+1 + div(d_index,5,RoundDown) ) * "^l"  , "N/A" , "f" * string(d_index+1 + div(d_index,5,RoundDown) )) )
         elseif mod(d_index,5) == 0
             # This is the right state. Send to the g state with d_index
-            add_transition!(system_out,( "d" * string(d_index) * "^r"  , "N/A" , "g" * string(d_index) ))
+            add_transition!(system_out,( "d" * string(d_index + div(d_index,5,RoundDown) - 1 ) * "^r"  , "N/A" , "g" * string(d_index + div(d_index,5,RoundDown) -1 ) ))
         end
     end
 
@@ -685,20 +691,20 @@ function get_figure3_system(num_patterns::Integer)
     for e_index in range(1,stop=n_e)
         if mod(e_index,5) == 1
             # This is the left state. Route to f
-            add_transition!(system_out,( "e" * string(e_index+1) * "^l"  , "N/A" , "f" * string(e_index+1) ))
+            add_transition!(system_out,( "e" * string(e_index+1 + div(e_index,5,RoundDown) ) * "^l"  , "N/A" , "f" * string(e_index+1 + div(e_index,5,RoundDown) ) ))
         elseif mod(e_index,5) == 2
             # This is the right state. Send to the g state with e_index
-            add_transition!(system_out,( "e" * string(e_index) * "^r"  , "N/A" , "g" * string(e_index) ))
+            add_transition!(system_out,( "e" * string(e_index + div(e_index,5,RoundDown) ) * "^r"  , "N/A" , "g" * string(e_index + div(e_index,5,RoundDown) ) ))
         elseif mod(e_index,5) == 3
             # Send to both f and g states with e_index
-            add_transition!(system_out,( "e" * string(e_index+1)  , "N/A" , "f" * string(e_index+1)  ))
-            add_transition!(system_out,( "e" * string(e_index+1)  , "N/A" , "g" * string(e_index+1)  ))
+            add_transition!(system_out,( "e" * string(e_index+1 + div(e_index,5,RoundDown) )  , "N/A" , "f" * string(e_index+1 + div(e_index,5,RoundDown) )  ))
+            add_transition!(system_out,( "e" * string(e_index+1 + div(e_index,5,RoundDown) )  , "N/A" , "g" * string(e_index+1 + div(e_index,5,RoundDown) )  ))
         elseif mod(e_index,5) == 4
             # This is the left state. Send to the f state
-            add_transition!(system_out,( "e" * string(e_index+2) * "^l"  , "N/A" , "f" * string(e_index+2) ))
+            add_transition!(system_out,( "e" * string(e_index+2 + div(e_index,5,RoundDown)) * "^l"  , "N/A" , "f" * string(e_index+2 + div(e_index,5,RoundDown) ) ))
         elseif mod(e_index,5) == 0
             # This is the right state. Send to the g state with e_index
-            add_transition!(system_out,( "e" * string(e_index+1) * "^r"  , "N/A" , "g" * string(e_index+1) ))
+            add_transition!(system_out,( "e" * string(e_index+1 + div(e_index,5,RoundDown) - 1) * "^r"  , "N/A" , "g" * string(e_index+1 + div(e_index,5,RoundDown) - 1 ) ))
         end
 
     end

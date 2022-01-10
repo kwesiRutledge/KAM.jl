@@ -5,7 +5,7 @@ Description:
     KAM paper.
 """
 
-function KAM(system_in::System)
+function KAM(system_in::System, max_iter::Integer)::System
     # Constants
 
     # Algorithm
@@ -15,38 +15,89 @@ function KAM(system_in::System)
     EXP_X = GetInitialEXP_X(system_in,cover)
     EXP_F = Vector{EXP_F_Element}([])
 
+    num_iterations::Integer = 0
     most_recent_EXP_X_elts = EXP_X
 
-    while Set( ProjectToGammaSet(EXP_X) ) == Set(EXP_Gamma)
+    S_hat = system_in
+
+    while Set( ProjectToGammaSet(EXP_X) ) != Set(EXP_Gamma)
+
         # Project EXP_X to make new EXP_Gamma
         EXP_Gamma = ProjectToGammaSet(EXP_X)
+
+        # Save old Sets for later use
+        EXP_F_previous = copy(EXP_F)
+        EXP_Gamma_previous = copy(EXP_Gamma)
+        EXP_X_previous = copy(EXP_X)
+        cover_previous = copy(cover)
+
+        # Get most recent EXP_X_Element Objects
+        most_recent_EXP_X_elts = Vector{EXP_X_Element}([])
+        for elt in EXP_X
+            if length(elt.v) == 2*num_iterations + 1
+                push!(most_recent_EXP_X_elts,elt)
+            end
+        end
+
+        # println(most_recent_EXP_X_elts)
+        new_EXP_X_elts = Vector{EXP_X_Element}([])
 
         for exp_x_elt in most_recent_EXP_X_elts
             for u in system_in.U
                 for y in system_in.Y
-                    v_prime = push!(exp_x_elt.v,u,y)
+
+                    v_prime = push!(copy(exp_x_elt.v),u,y)
                     c_prime::Vector{String} = intersect( F(exp_x_elt.c,u,system_in) , HInverse(y,system_in))
                     if length(c_prime) == 0
                         continue
                     end
 
                     Q_prime = GetMinimalCoverElementsContaining(c_prime,cover)
-
+                    
                     # Modify EXP_X and EXP_F
                     for q_prime in Q_prime
-                        union!(EXP_X, EXP_X_Element( (v_prime,q_prime,c_prime) ) )
-                        union!(EXP_F, EXP_F_Element( ( exp_x_elt , u , EXP_X_Element( (v_prime,q_prime,c_prime) ) ) ))
+                        union!(new_EXP_X_elts, [ EXP_X_Element( (v_prime, q_prime, c_prime) ) ] )
+                        union!(EXP_F, [ EXP_F_Element( ( exp_x_elt , u , EXP_X_Element( (v_prime,q_prime,c_prime) ) ) ) ] )
                     end
 
                 end
             end
 
+            union!( EXP_X , new_EXP_X_elts )
+
             # Determine if refinement is necessary
             if exp_x_elt.c ⊊ exp_x_elt.q
-                EXP_F_r , EXP_Gamma_r , EXP_X_r , cover_r = refine(target, sys_3c, EXP_F_3c, EXP_Gamma , EXP_X , cover)
+                EXP_F , EXP_Gamma , EXP_X , cover = refine( exp_x_elt, system_in, EXP_F, EXP_Gamma , EXP_X , cover)
             end
+
         end
+
+        # Extract System
+        
+        # println("EXP_X")
+        # println(EXP_X)
+        # println("EXP_F")
+        # println(EXP_F)
+
+        # println(EXP_X)
+
+        S_hat = extract(system_in , EXP_X , EXP_F )
+
+        # Update Number of Iterations
+        num_iterations += 1
+
+        # Termination conditions
+        if num_iterations == max_iter
+            # If the algorithm has exceeded the maximum number of iterations,
+            # then return.
+            break
+        end
+
+        
+        
     end
+
+    return S_hat
 
 end
 
@@ -168,6 +219,11 @@ function refine( exp_x_elt::EXP_X_Element , system_in::System, EXP_F_in::Vector{
 
     PostQ_list = PostQ( exp_x_elt , system_in , EXP_F_in )
     s = u_dependent_Pre( exp_x_elt.q , system_in , PostQ_list )
+
+    if length(s) == 0
+        # if s is the empty set, then refine nothing.
+        return EXP_F_out , EXP_Gamma_out , EXP_X_out , Cover_out
+    end
 
     if s ⊊ exp_x_elt.q
         # If the set s is smaller than q, then we can refine our sets.
